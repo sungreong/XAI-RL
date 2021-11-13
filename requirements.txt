@@ -1,0 +1,16 @@
+numpy
+pandas 
+black
+matplotlib
+torchvision==0.9.0+cu111 
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.8.0+cu111 
+--find-links https://download.pytorch.org/whl/torch_stable.html
+captum
+tqdm
+scikit-image
+dill
+gym
+gym[atari]
+pyglet
+ipywidgets
