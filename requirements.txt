@@ -14,3 +14,4 @@ gym
 gym[atari]
 pyglet
 ipywidgets
+scikit-learn

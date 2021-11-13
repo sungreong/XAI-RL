@@ -444,23 +444,6 @@ class ImageXAI(object):
 
         return tensor_attributions
 
-    def show_encoded_img(self, save_path):
-        input = self.change_dim(self.transform_input(self.input_dict))
-        result = self.model.ae.encoder(input)
-        result = result.detach().cpu().numpy().squeeze().transpose(1, 2, 0)
-        fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(16, 9))
-        ax1.imshow(self.input_dict["image"])
-        ax1.set_title(f"input image")
-        ax2.imshow(result)
-        ax2.set_title(f"img class : {self.real_class_eng}")
-        ax3.pcolor(result.sum(axis=2))
-        ax3.set_title(f"heatmap class : {self.real_class_eng}")
-        if save_path is None:
-            plt.show()
-        else:
-            plt.savefig(save_path)
-            plt.close()
-
     def show_integrated_gradients(self, save_folder):
         input = self.change_dim(self.transform_input(self.input_dict))
         print("Predicted:", self.pred_class_idx, " Probability:", self.probs)
