@@ -131,3 +131,4 @@ dmypy.json
 
 # add 211113
 /jupyter/model.pt
+/jupyter/gif

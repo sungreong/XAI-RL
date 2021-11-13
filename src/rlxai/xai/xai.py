@@ -142,7 +142,9 @@ class ImageXAI(object):
         attr_ig, delta = self.attribute_image_features(
             self.integrated_gradients, input, baselines=input * 0, return_convergence_delta=True
         )
-        self.attr_ig = np.transpose(attr_ig.squeeze().cpu().detach().numpy(), (1, 2, 0))
+        if attr_ig.ndim == 4:
+            attr_ig = attr_ig.squeeze(0)
+        self.attr_ig = np.transpose(attr_ig.cpu().detach().numpy(), (1, 2, 0))
         print("Approximation delta: ", abs(delta))
 
     def run_GradientShap(
@@ -335,8 +337,8 @@ class ImageXAI(object):
             "custom blue", [(0, "#ffffff"), (0.25, "#000000"), (1, "#000000")], N=256
         )
         plt_fig, _ = viz.visualize_image_attr(
-            np.transpose(self.attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-            np.transpose(self.transform_input(self.input_dict).cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(self.attributions_ig.squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(self.transform_input(self.input_dict).squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
             method="heat_map",
             cmap=default_cmap,
             show_colorbar=True,
@@ -359,10 +361,12 @@ class ImageXAI(object):
         attributions_ig_nt = noise_tunnel.attribute(
             input, nt_samples=10, nt_type="smoothgrad_sq", target=self.pred_class_idx
         )
+        if attributions_ig_nt.ndim == 4:
+            attributions_ig_nt = attributions_ig_nt.squeeze(0)
 
         plt_fig, _ = viz.visualize_image_attr_multiple(
-            np.transpose(attributions_ig_nt.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-            np.transpose(input.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(attributions_ig_nt.cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(input.squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
             ["original_image", "heat_map"],
             ["all", "positive"],
             cmap=default_cmap,
@@ -388,9 +392,11 @@ class ImageXAI(object):
         attributions_gs = self.gradient_shap.attribute(
             input, n_samples=50, stdevs=0.0001, baselines=rand_img_dist, target=self.pred_class_idx
         )
+        if attributions_gs.ndim == 4:
+            attributions_gs = attributions_gs.squeeze(0)
         plt_fig, _ = viz.visualize_image_attr_multiple(
-            np.transpose(attributions_gs.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-            np.transpose(input.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(attributions_gs.cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(input.squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
             ["original_image", "heat_map"],
             ["all", "absolute_value"],
             cmap=default_cmap,
@@ -412,8 +418,8 @@ class ImageXAI(object):
             baselines=0,
         )
         plt_fig, _ = viz.visualize_image_attr_multiple(
-            np.transpose(attributions_occ.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-            np.transpose(input.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(attributions_occ.squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
+            np.transpose(input.squeeze(0).cpu().detach().numpy(), (1, 2, 0)),
             ["original_image", "heat_map"],
             ["all", "positive"],
             show_colorbar=True,
@@ -446,7 +452,7 @@ class ImageXAI(object):
         print("Predicted:", self.pred_class_idx, " Probability:", self.probs)
         saliency = Saliency(self.model)
         grads = saliency.attribute(input, target=self.real_class_idx)
-        grads = np.transpose(grads.squeeze().cpu().detach().numpy(), (1, 2, 0))
+        grads = np.transpose(grads.squeeze(0).cpu().detach().numpy(), (1, 2, 0))
         nt = NoiseTunnel(self.integrated_gradients)
         attr_ig_nt = self.attribute_image_features(
             nt, input, baselines=input * 0, nt_type="smoothgrad_sq", nt_samples=100, stdevs=0.2

@@ -15,3 +15,5 @@ gym[atari]
 pyglet
 ipywidgets
 scikit-learn
+opencv-python
+array2gif
