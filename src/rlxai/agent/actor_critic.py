@@ -56,7 +56,6 @@ class A2C(object):
     def finish_trajectory(self, rewards, is_terminals, values, last_value=0, gamma=0.9, lam=0.1):
 
         start_idx = 0
-        terminal_idx = -1
         r = rewards[start_idx:]
         d = is_terminals[start_idx:]
         v = values[start_idx:]
@@ -68,7 +67,6 @@ class A2C(object):
         returns_arr = discounted_cumulative_sums(r, gamma)[:-1]
         advs = np.zeros(len(advs_arr))
         returns = np.zeros(len(advs_arr))
-        print(len(advs_arr))
         advs[start_idx:] = advs_arr
         returns[start_idx:] = returns_arr
         return advs, returns
@@ -87,7 +85,6 @@ class A2C(object):
 
         values = torch.stack(values).squeeze()
         advs = torch.tensor(advs, dtype=torch.float32, device=self.device).detach()
-        returns = torch.tensor(returns, dtype=torch.float32, device=self.device).detach()
         returns = torch.tensor(returns, dtype=torch.float32, device=self.device).detach()
         logprobs = torch.stack(logprobs).squeeze()
         actor_loss, critic_loss = self.a2c_losses(values, logprobs, returns, advs)
