@@ -1,6 +1,4 @@
 from matplotlib import use
-from rlxai.img_utils import Rescale, RandomCrop, ToTensor, read_img
-from torchvision import transforms
 from captum.attr import IntegratedGradients
 from captum.attr import GradientShap
 from captum.attr import Occlusion
@@ -22,7 +20,6 @@ import warnings
 import os
 
 warnings.filterwarnings("ignore")
-data_transform = transforms.Compose([Rescale(256), ToTensor()])  #
 
 
 def show_attr(attr_map, save_path):
