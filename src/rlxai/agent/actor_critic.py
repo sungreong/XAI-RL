@@ -22,19 +22,20 @@ class A2C(object):
         lam=0.1,
         device="cpu",
     ):
+        self.device = device
+        self.actor = actor.to(self.device)
+        self.critic = critic.to(self.device)
         self._optimizerA = Adam(
-            actor.parameters(),
+            self.actor.parameters(),
             lr=lr,
         )
         self._optimizerC = Adam(
-            critic.parameters(),
+            self.critic.parameters(),
             lr=lr,
         )
-        self.actor = actor
-        self.critic = critic
+
         self.gamma = gamma
         self.lam = lam
-        self.device = device
 
     def __str__(
         self,
@@ -47,8 +48,12 @@ class A2C(object):
         distribution = Categorical(logits=logits)
         if inference:
             model_action = torch.argmax(distribution.probs).detach().cpu().numpy()
-            return model_action, value
+            return model_action
         else:
+            # self.epsilon = 1.0
+            # if np.random.rand() <= self.epsilon:
+            #     model_action = torch.tensor(np.random.choice([0, 1, 2, 3], size=1))
+            # else:
             model_action = distribution.sample()
             logprob = distribution.log_prob(model_action)
             return model_action, value, logprob

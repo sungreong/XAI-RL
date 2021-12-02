@@ -17,3 +17,4 @@ ipywidgets
 scikit-learn
 opencv-python
 array2gif
+pygad
