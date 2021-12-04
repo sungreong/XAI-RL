@@ -11,13 +11,13 @@ import gym
 class DistributedManager:
     def __init__(self, env_config, agent_config, num_workers, mode):
         try:
-            ray.init(address="auto", num_cpus=2, object_store_size=1)
+            ray.init(address="auto")
         except:
             ray.init()
-        agent = get_agent(**agent_config)
+        agent, _, _ = get_agent(**agent_config)
         self.num_workers = num_workers if num_workers else os.cpu_count()
-        env_config, agent = map(ray.put, [dict(env_config), agent])
-        self.actors = [Actor.remote(env_config, agent, i) for i in range(self.num_workers)]
+        env_config, agent = map(ray.put, [env_config, agent])
+        self.actors = [Actor.remote(env_config, agent, (i + 1) * 10) for i in range(self.num_workers)]
 
         assert mode in ["sync", "async"]
         self.mode = mode
@@ -65,22 +65,31 @@ class Actor:
     def __init__(self, env_config, agent, id):
         self.id = id
         ##############################################
-        env = gym.make(env_config.get("env_name"))
-        stack_n = 4
-        if "FIRE" in env.unwrapped.get_action_meanings():
-            env = FireResetEnv(env)
-        env = WarpFrame(env)
-        env = ScaledFloatFrame(env)
-        self.env = FrameStack(env, k=stack_n)
+        self.env = gym.make(env_config.get("env_name"))
+        if "FIRE" in self.env.unwrapped.get_action_meanings():
+            self.env = FireResetEnv(self.env)
+        self.env = WarpFrame(self.env)
+        self.env = ScaledFloatFrame(self.env)
+        self.env = FrameStack(self.env, k=env_config.get("stack_n"))
         ##########################################
         self.agent = agent.set_distributed(id)
+        self.env.seed(id)
         self.state = self.env.reset()
+        # self.info = {"lives": 5}
 
     def run(self, step):
         transitions = []
+        # last_lives = self.info["lives"]
         for t in range(step):
-            action_dict = self.agent.act(self.state, training=True)
-            next_state, reward, done = self.env.step(action_dict["action"])
+            action_dict = self.agent.select_action(self.state, training=True)
+            # if last_lives > self.info["lives"]:
+            #     action = 1  # TODO: 에이전트가 1을 선택할 수 있게 하기?
+            #     last_lives = self.info["lives"]
+            # else:
+            #     action = int(action_dict["action"])
+            action = int(action_dict["action"])
+            next_state, reward, done, self.info = self.env.step(action)
+            reward, done = map(lambda x: np.expand_dims(x, 0), [[reward], [done]])  # for (1, ?)
             transition = {
                 "state": self.state,
                 "next_state": next_state,
@@ -92,6 +101,10 @@ class Actor:
             if transition:
                 transitions.append(transition)
             self.state = next_state if not done else self.env.reset()
+            # if done:
+            #     self.info = {"lives": 5}
+            #     last_lives = self.info["lives"]
+
         return self.id, transitions
 
     def sync(self, sync_item):

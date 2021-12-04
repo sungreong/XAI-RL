@@ -2,9 +2,9 @@ numpy
 pandas 
 black
 matplotlib
-torchvision==0.9.0+cu111 
+torchvision==0.9.0+cpu 
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.8.0+cu111 
+torch==1.8.0+cpu
 --find-links https://download.pytorch.org/whl/torch_stable.html
 captum
 tqdm
@@ -18,3 +18,4 @@ scikit-learn
 opencv-python
 array2gif
 pygad
+ray==1.8.0

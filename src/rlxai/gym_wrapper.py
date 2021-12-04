@@ -1,8 +1,9 @@
-import gym 
+import gym
 from collections import deque
 import gym
 from gym import spaces
-import cv2 , numpy as np
+import cv2, numpy as np
+
 
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env):
@@ -11,7 +12,7 @@ class FireResetEnv(gym.Wrapper):
         https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py
         """
         gym.Wrapper.__init__(self, env)
-        assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
+        assert env.unwrapped.get_action_meanings()[1] == "FIRE"
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
     def reset(self, **kwargs):
@@ -26,7 +27,6 @@ class FireResetEnv(gym.Wrapper):
 
     def step(self, ac):
         return self.env.step(ac)
-
 
 
 class WarpFrame(gym.ObservationWrapper):
@@ -68,9 +68,7 @@ class WarpFrame(gym.ObservationWrapper):
 
         if self._grayscale:
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(
-            frame, (self._width, self._height), interpolation=cv2.INTER_AREA
-        )
+        frame = cv2.resize(frame, (self._width, self._height), interpolation=cv2.INTER_AREA)
         if self._grayscale:
             frame = np.expand_dims(frame, -1)
 
@@ -80,6 +78,16 @@ class WarpFrame(gym.ObservationWrapper):
             obs = obs.copy()
             obs[self._key] = frame
         return obs
+
+
+def data_transform(frame):
+    # breakout-v4
+    # [width, height, channels] (기존)
+    # [channels, height, width] (변경)
+    frame = np.array(frame).transpose(2, 1, 0)
+    frame = np.expand_dims(frame, 0)
+    assert np.sum(np.isnan(frame)) == 0, "state error!"
+    return frame.astype(np.float32)
 
 
 class FrameStack(gym.Wrapper):
@@ -94,7 +102,9 @@ class FrameStack(gym.Wrapper):
         self.k = k
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
-        self.observation_space = spaces.Box(low=0, high=255, shape=(shp[:-1] + (shp[-1] * k,)), dtype=env.observation_space.dtype)
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(shp[:-1] + (shp[-1] * k,)), dtype=env.observation_space.dtype
+        )
 
     def reset(self):
         ob = self.env.reset()
@@ -109,7 +119,8 @@ class FrameStack(gym.Wrapper):
 
     def _get_ob(self):
         assert len(self.frames) == self.k
-        return LazyFrames(list(self.frames))
+        return data_transform(LazyFrames(list(self.frames)))
+
 
 class ScaledFloatFrame(gym.ObservationWrapper):
     def __init__(self, env):
@@ -120,6 +131,7 @@ class ScaledFloatFrame(gym.ObservationWrapper):
         # careful! This undoes the memory optimization, use
         # with smaller replay buffers only.
         return np.array(observation).astype(np.float32) / 255.0
+
 
 class LazyFrames(object):
     def __init__(self, frames):

@@ -4,10 +4,12 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import os
-from rlxai.agent.model import NeuralNetwork, DQNNeuralNetwork
+from rlxai.agent.model import NeuralNetwork
 from rlxai.buffer.replay_buffer import ReplayBuffer
 
 from .base import BaseAgent
+
+
 class DQN(BaseAgent):
     """DQN agent.
 

@@ -5,7 +5,11 @@ import os
 
 setup_requires = []
 
-install_requires = []
+
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
+
+install_requires = required
 
 dependency_links = []
 

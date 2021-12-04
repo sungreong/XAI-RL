@@ -1,7 +1,9 @@
 from rlxai.agent.per import PER
 from rlxai.agent.dqn import DQN
 from rlxai.agent.double import Double
-from rlxai.agent.ppo_v2 import PPO
+
+# from rlxai.agent.ppo_v2 import PPO
+from rlxai.agent.ppo_jor import PPO
 from pathlib import Path
 
 
@@ -36,16 +38,15 @@ def get_agent(model_name, save_path, device, state_dim, action_dim, load_model=T
         )
     elif model_name == "PPO":
         agent = PPO(
-            state_dim=state_dim,
-            action_dim=action_dim,
-            lr_actor=0.0003,
-            lr_critic=0.001,
+            state_size=state_dim,
+            action_size=action_dim,
             gamma=0.99,
-            K_epochs=5,
+            K_epochs=2,
             batch_size=128,
             eps_clip=0.2,
+            ent_coef=0.05,
             device=device,
-            n_step=5000,
+            n_step=1500,
         )
     elif model_name == "DQN":
         agent = DQN(
@@ -65,8 +66,8 @@ def get_agent(model_name, save_path, device, state_dim, action_dim, load_model=T
     model_algo_path.mkdir(exist_ok=True, parents=True)
     checkpoint_path = model_algo_path.joinpath("./model.pt")
     try:
-        print("load")
         if load_model:
+            print("load")
             agent.load(checkpoint_path)
     except Exception as e:
         print(e)
